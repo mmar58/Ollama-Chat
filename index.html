@@ -117,210 +117,217 @@
     }
   </style>
 </head>
+
 <body>
 
-<div class="chat-window" id="chatWindow">
-  <div class="chat-header" id="chatHeader">
-    <span>Ollama Chat</span>
-    <select id="modelSelector">
-    </select>
-    <button id="hideButton">Hide</button>
+  <div class="chat-window" id="chatWindow">
+    <div class="chat-header" id="chatHeader">
+      <span>Ollama Chat</span>
+      <select id="modelSelector">
+      </select>
+      <button id="hideButton">Hide</button>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input">
+      <textarea id="chatInput" placeholder="Type your message..."></textarea>
+      <button id="sendButton">Send</button>
+    </div>
   </div>
-  <div class="chat-messages" id="chatMessages"></div>
-  <div class="chat-input">
-    <textarea id="chatInput" placeholder="Type your message..."></textarea>
-    <button id="sendButton">Send</button>
-  </div>
-</div>
 
-<div class="chat-indicator" id="chatIndicator">Chat</div>
+  <div class="chat-indicator" id="chatIndicator">Chat</div>
 
-<script>
-  const chatWindow = document.getElementById('chatWindow');
-  const chatHeader = document.getElementById('chatHeader');
-  const chatMessages = document.getElementById('chatMessages');
-  const chatInput = document.getElementById('chatInput');
-  const sendButton = document.getElementById('sendButton');
-  const modelSelector = document.getElementById('modelSelector');
-  const hideButton = document.getElementById('hideButton');
-  const chatIndicator = document.getElementById('chatIndicator');
+  <script>
+    const ollamaUrl = "http://localhost:11434/api/";
 
-  // Draggable functionality
-  let isDragging = false;
-  let offsetX = 0;
-  let offsetY = 0;
+    let chatHistory = [
+      { role: "system", content: "You are a helpful assistant." },
+    ];
+    // Grabbing the chat elements
+    const chatWindow = document.getElementById('chatWindow');
+    const chatHeader = document.getElementById('chatHeader');
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const sendButton = document.getElementById('sendButton');
+    const modelSelector = document.getElementById('modelSelector');
+    const hideButton = document.getElementById('hideButton');
+    const chatIndicator = document.getElementById('chatIndicator');
 
-  chatHeader.addEventListener('mousedown', (e) => {
-    isDragging = true;
-    offsetX = e.clientX - chatWindow.offsetLeft;
-    offsetY = e.clientY - chatWindow.offsetTop;
-    chatHeader.style.cursor = 'grabbing';
-  });
+    // Draggable functionality
+    let isDragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
 
-  document.addEventListener('mousemove', (e) => {
-    if (isDragging) {
-      chatWindow.style.left = `${e.clientX - offsetX}px`;
-      chatWindow.style.top = `${e.clientY - offsetY}px`;
-    }
-  });
-
-  document.addEventListener('mouseup', () => {
-    isDragging = false;
-    chatHeader.style.cursor = 'grab';
-  });
-
-  // Hide chat window
-  hideButton.addEventListener('click', () => {
-    chatWindow.style.display = 'none';
-    chatIndicator.style.display = 'flex';
-  });
-
-  // Show chat window
-  chatIndicator.addEventListener('click', () => {
-    chatWindow.style.display = 'flex';
-    chatIndicator.style.display = 'none';
-  });
-
-  // Handle sending messages
-  sendButton.addEventListener('click', () => {
-    const message = chatInput.value.trim();
-    if (message) {
-      appendMessage('user', message);
-      chatInput.value = '';
-      sendToOllama(message);
-    }
-  });
-  function getModelList(){
-    console.log(window.location)
-    fetch('http://localhost:11434/api/tags')
-    .then(response => response.json())
-    .then(data => {
-      const modelSelector = document.getElementById('modelSelector');
-      data.models.forEach(model => {
-        const option = document.createElement('option');
-        option.value = model.model;
-        option.textContent = model.model;
-        modelSelector.appendChild(option);
-      });
-    })
-  }
-  getModelList()
-  function appendMessage(role, content) {
-    const messageDiv = document.createElement('div');
-    messageDiv.classList.add(role);
-    messageDiv.textContent = content; // Plain text
-    chatMessages.appendChild(messageDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
-
-  async function sendToOllama(message) {
-    const selectedModel = modelSelector.value;
-
-    const response = await fetch('http://localhost:11434/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: selectedModel,
-        history: [
-          { role: 'user', content: message }
-        ],
-      }),
+    chatHeader.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      offsetX = e.clientX - chatWindow.offsetLeft;
+      offsetY = e.clientY - chatWindow.offsetTop;
+      chatHeader.style.cursor = 'grabbing';
     });
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let result = '';
+    document.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        chatWindow.style.left = `${e.clientX - offsetX}px`;
+        chatWindow.style.top = `${e.clientY - offsetY}px`;
+      }
+    });
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      result += decoder.decode(value);
-      appendMessage('assistant', result);
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+      chatHeader.style.cursor = 'grab';
+    });
+
+    // Hide chat window
+    hideButton.addEventListener('click', () => {
+      chatWindow.style.display = 'none';
+      chatIndicator.style.display = 'flex';
+    });
+
+    // Show chat window
+    chatIndicator.addEventListener('click', () => {
+      chatWindow.style.display = 'flex';
+      chatIndicator.style.display = 'none';
+    });
+
+    // Handle sending messages
+    sendButton.addEventListener('click', () => {
+      const message = chatInput.value.trim();
+      if (message) {
+        appendMessage('user', message);
+        chatInput.value = '';
+        chatOllama(message, modelSelector.value,"user");
+      }
+    });
+    function getModelList() {
+      console.log(window.location)
+      fetch(ollamaUrl+'tags')
+        .then(response => response.json())
+        .then(data => {
+          const modelSelector = document.getElementById('modelSelector');
+          data.models.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model.model;
+            option.textContent = model.model;
+            modelSelector.appendChild(option);
+          });
+        })
     }
-  }
-</script>
+    getModelList()
+    function appendMessage(role, content) {
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add(role);
+      messageDiv.textContent = content; // Plain text
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      return messageDiv;
+    }
+
+    async function sendToOllama(message) {
+      const selectedModel = modelSelector.value;
+
+      const response = await fetch('http://localhost:11434/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: selectedModel,
+          history: [
+            { role: 'user', content: message }
+          ],
+        }),
+      });
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let result = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        result += decoder.decode(value);
+        appendMessage('assistant', result);
+      }
+    }
+  </script>
 </body>
 <script>
   // Define the base URL and model
-const ollamaUrl = "http://localhost:11434/api/";
 
-let chatHistory = [
-{role:"system",content:"You are a helpful assistant."},
-];
 
-// Function to process the stream
-async function processStream(reader) {
-const decoder = new TextDecoder();
-let result = "";
-while (true) {
-const { done, value } = await reader.read();
-if (done) break;
-result = decoder.decode(value, { stream: true });
-// Process the chunk (e.g., parse JSON and handle the response)
-try{
-   console.log(JSON.parse(result));
-}
-catch{
-   console.log(result);
-}
-}
-}
+  // Function to process the stream
+  async function processStream(reader) {
+    const decoder = new TextDecoder();
+    let result = "";
+    var curMessageDiv = appendMessage('assistant', result);
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      result = decoder.decode(value, { stream: true });
+      let resultJson=JSON.parse(result)
+      curMessageDiv.textContent+=resultJson.message.content+" "
+      // Process the chunk (e.g., parse JSON and handle the response)
+      
+    }
+    chatHistory.push({
+      role: "assistant",
+      content: curMessageDiv.textContent
+    })
+  }
 
-// Make a POST request to Ollama API with streaming
-async function generateOllama(prompt="",model="llama3.2:latest") {
-try {
-const response = await fetch(ollamaUrl+"generate", {
- method: "POST",
- headers: {
-   "Content-Type": "application/json",
- },
- body: JSON.stringify({
-   model: model,
-   prompt: prompt,
-   stream: true, // Enable streaming
- }),
-});
+  // Make a POST request to Ollama API with streaming
+  async function generateOllama(prompt = "", model = "llama3.2:latest") {
+    try {
+      const response = await fetch(ollamaUrl + "generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: model,
+          prompt: prompt,
+          stream: true, // Enable streaming
+        }),
+      });
 
-if (!response.ok) {
- throw new Error(`HTTP error! Status: ${response.status}`);
-}
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
 
-const reader = response.body.getReader();
-await processStream(reader);
-} catch (error) {
-console.error("Error calling Ollama API:", error);
-}
-}
+      const reader = response.body.getReader();
+      await processStream(reader);
+    } catch (error) {
+      console.error("Error calling Ollama API:", error);
+    }
+  }
 
-async function chatOllama(prompt="",model="llama3.2:latest",role="user") {
-try {
-chatHistory.push({
-   role:role,
-   content:prompt
-})
-const response = await fetch(ollamaUrl+"chat", {
- method: "POST",
- headers: {
-   "Content-Type": "application/json",
- },
- body: JSON.stringify({
-   model: model,
-   messages:chatHistory,
-   stream: true, // Enable streaming
- }),
-});
+  async function chatOllama(prompt = "", model = "llama3.2:latest", role = "user") {
+    try {
+      chatHistory.push({
+        role: role,
+        content: prompt
+      })
+      const response = await fetch(ollamaUrl + "chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: chatHistory,
+          stream: true, // Enable streaming
+        }),
+      });
 
-if (!response.ok) {
- throw new Error(`HTTP error! Status: ${response.status}`);
-}
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
 
-const reader = response.body.getReader();
-await processStream(reader);
-} catch (error) {
-console.error("Error calling Ollama API:", error);
-}
-}
+      const reader = response.body.getReader();
+      await processStream(reader);
+    } catch (error) {
+      console.error("Error calling Ollama API:", error);
+    }
+  }
 </script>
+
 </html>
