@@ -26,6 +26,8 @@
       flex-direction: column;
       resize: both;
       overflow: hidden;
+
+      z-index: 100;
     }
 
     .chat-header {
@@ -47,6 +49,7 @@
       padding: 5px;
       border-radius: 5px;
       border: none;
+      max-width: 66%;
     }
 
     .chat-header button {
@@ -137,8 +140,7 @@
   <div class="chat-indicator" id="chatIndicator">Chat</div>
 
   <script>
-    const ollamaUrl = "http://localhost:11434/api/";
-
+    let ollamaUrl = "http://localhost:11434/api/";
     let chatHistory = [
       { role: "system", content: "You are a helpful assistant." },
     ];
@@ -198,10 +200,11 @@
       }
     });
     function getModelList() {
-      console.log(window.location)
+      console.log(ollamaUrl+'tags')
       fetch(ollamaUrl+'tags')
         .then(response => response.json())
         .then(data => {
+          // console.log(data)
           const modelSelector = document.getElementById('modelSelector');
           data.models.forEach(model => {
             const option = document.createElement('option');
