@@ -140,7 +140,17 @@
   <div class="chat-indicator" id="chatIndicator">Chat</div>
 
   <script>
-    let ollamaUrl = "http://localhost:11434/api/";
+    let ollamaPort=8981;
+    let ollamaUrl = "http://localhost:"+ollamaPort+"/api/";
+
+    // Updating ollamaURL
+    if(!window.location.href.includes("localhost")){
+      if(window.location.href.includes("192.168")){
+        
+        ollamaUrl="http://"+window.location.href.replace("http://","").split("/")[0].split(":")[0]+`:${ollamaPort}/api/`
+        console.log(ollamaUrl)
+      }
+    }
     let chatHistory = [
       { role: "system", content: "You are a helpful assistant." },
     ];
@@ -201,10 +211,10 @@
     });
     function getModelList() {
       console.log(ollamaUrl+'tags')
-      fetch(ollamaUrl+'tags')
+      fetch(ollamaUrl+'tags',{ mode: 'cors'})
         .then(response => response.json())
         .then(data => {
-          // console.log(data)
+          console.log(data)
           const modelSelector = document.getElementById('modelSelector');
           data.models.forEach(model => {
             const option = document.createElement('option');
@@ -266,8 +276,8 @@
       const { done, value } = await reader.read();
       if (done) break;
       result = decoder.decode(value, { stream: true });
-      let resultJson=JSON.parse(result)
-      curMessageDiv.textContent+=resultJson.message.content+" "
+      // let resultJson=JSON.parse(result)
+      curMessageDiv.textContent+=result+" "
       // Process the chunk (e.g., parse JSON and handle the response)
       
     }
@@ -315,8 +325,8 @@
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: model,
-          messages: chatHistory,
+          // model: model,
+          prompt: prompt,
           stream: true, // Enable streaming
         }),
       });
