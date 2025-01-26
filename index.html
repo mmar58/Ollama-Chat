@@ -209,21 +209,38 @@
         chatOllama(message, modelSelector.value,"user");
       }
     });
-    function getModelList() {
-      console.log(ollamaUrl+'tags')
-      fetch(ollamaUrl+'tags',{ mode: 'cors'})
-        .then(response => response.json())
-        .then(data => {
-          console.log(data)
-          const modelSelector = document.getElementById('modelSelector');
-          data.models.forEach(model => {
-            const option = document.createElement('option');
-            option.value = model.model;
-            option.textContent = model.model;
-            modelSelector.appendChild(option);
-          });
-        })
-    }
+   // Function to get the model list from the API and populate the dropdown
+  function getModelList() {
+    console.log(ollamaUrl + 'tags');
+    fetch(ollamaUrl + 'tags', { mode: 'cors' })
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        const modelSelector = document.getElementById('modelSelector');
+
+        // Clear existing options
+        modelSelector.innerHTML = '';
+
+        // Populate dropdown with models
+        data.models.forEach(model => {
+          const option = document.createElement('option');
+          option.value = model.model;
+          option.textContent = model.model;
+          modelSelector.appendChild(option);
+        });
+
+        // Set the selected model from localStorage if available
+        const savedModel = localStorage.getItem('selectedModel');
+        if (savedModel) {
+          modelSelector.value = savedModel;
+        }
+
+        // Add event listener to save selected model to localStorage
+        modelSelector.addEventListener('change', () => {
+          localStorage.setItem('selectedModel', modelSelector.value);
+        });
+      });
+  }
     getModelList()
     function appendMessage(role, content) {
       const messageDiv = document.createElement('div');
