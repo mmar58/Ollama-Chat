@@ -180,6 +180,7 @@
       if (isDragging) {
         chatWindow.style.left = `${e.clientX - offsetX}px`;
         chatWindow.style.top = `${e.clientY - offsetY}px`;
+        saveChatWindowState();
       }
     });
 
@@ -359,5 +360,42 @@
     }
   }
 </script>
+<!-- Keeping window size and position persistant -->
+ <script>
+  // Function to save chat window state
+  function saveChatWindowState() {
+    const state = {
+      left: chatWindow.style.left || '20px',
+      top: chatWindow.style.top || '20px',
+      width: chatWindow.style.width || '400px',
+      height: chatWindow.style.height || '500px',
+    };
+    localStorage.setItem('chatWindowState', JSON.stringify(state));
+  }
 
+  // Function to restore chat window state
+  function restoreChatWindowState() {
+    const savedState = localStorage.getItem('chatWindowState');
+    if (savedState) {
+      const { left, top, width, height } = JSON.parse(savedState);
+      chatWindow.style.left = left;
+      chatWindow.style.top = top;
+      chatWindow.style.width = width;
+      chatWindow.style.height = height;
+    }
+  }
+
+  // Restore position and size on page load
+  restoreChatWindowState();
+
+  // Resizable functionality
+  chatWindow.addEventListener('resize', saveChatWindowState);
+  const resizeObserver = new ResizeObserver(() => {
+    saveChatWindowState(); // Save size on resize
+  });
+  resizeObserver.observe(chatWindow);
+
+  // Save state on unload
+  window.addEventListener('beforeunload', saveChatWindowState);
+ </script>
 </html>
