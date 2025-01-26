@@ -8,5 +8,7 @@ It’s a easy floating chat in simple html and javascript. You can easily attach
 
 * Chat with ollama with chat history
 * Change models easily
+* Keeping model persistant over reload
+* Keeping chat window and size persistant over reload
 
 
