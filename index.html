@@ -205,8 +205,7 @@
     sendButton.addEventListener('click', () => {
       const message = chatInput.value.trim();
       if (message) {
-        appendMessage('user', message);
-        chatInput.value = '';
+        
         chatOllama(message, modelSelector.value,"user");
       }
     });
@@ -337,6 +336,8 @@
         role: role,
         content: prompt
       })
+      appendMessage(role, prompt);
+        chatInput.value = '';
       const response = await fetch(ollamaUrl + "chat", {
         method: "POST",
         headers: {
@@ -344,7 +345,7 @@
         },
         body: JSON.stringify({
           // model: model,
-          prompt: prompt,
+          messages: chatHistory,
           stream: true, // Enable streaming
         }),
       });
