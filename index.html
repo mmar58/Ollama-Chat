@@ -140,14 +140,14 @@
   <div class="chat-indicator" id="chatIndicator">Chat</div>
 
   <script>
-    let ollamaPort=8981;
-    let ollamaUrl = "http://localhost:"+ollamaPort+"/api/";
+    let ollamaPort = 8981;
+    let ollamaUrl = "http://localhost:" + ollamaPort + "/api/";
 
     // Updating ollamaURL
-    if(!window.location.href.includes("localhost")){
-      if(window.location.href.includes("192.168")){
-        
-        ollamaUrl="http://"+window.location.href.replace("http://","").split("/")[0].split(":")[0]+`:${ollamaPort}/api/`
+    if (!window.location.href.includes("localhost")) {
+      if (window.location.href.includes("192.168")) {
+
+        ollamaUrl = "http://" + window.location.href.replace("http://", "").split("/")[0].split(":")[0] + `:${ollamaPort}/api/`
         console.log(ollamaUrl)
       }
     }
@@ -205,42 +205,42 @@
     sendButton.addEventListener('click', () => {
       const message = chatInput.value.trim();
       if (message) {
-        
-        chatOllama(message, modelSelector.value,"user");
+
+        chatOllama(message, modelSelector.value, "user");
       }
     });
-   // Function to get the model list from the API and populate the dropdown
-  function getModelList() {
-    console.log(ollamaUrl + 'tags');
-    fetch(ollamaUrl + 'tags', { mode: 'cors' })
-      .then(response => response.json())
-      .then(data => {
-        console.log(data);
-        const modelSelector = document.getElementById('modelSelector');
+    // Function to get the model list from the API and populate the dropdown
+    function getModelList() {
+      console.log(ollamaUrl + 'tags');
+      fetch(ollamaUrl + 'tags', { mode: 'cors' })
+        .then(response => response.json())
+        .then(data => {
+          console.log(data);
+          const modelSelector = document.getElementById('modelSelector');
 
-        // Clear existing options
-        modelSelector.innerHTML = '';
+          // Clear existing options
+          modelSelector.innerHTML = '';
 
-        // Populate dropdown with models
-        data.models.forEach(model => {
-          const option = document.createElement('option');
-          option.value = model.model;
-          option.textContent = model.model;
-          modelSelector.appendChild(option);
+          // Populate dropdown with models
+          data.models.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model.model;
+            option.textContent = model.model;
+            modelSelector.appendChild(option);
+          });
+
+          // Set the selected model from localStorage if available
+          const savedModel = localStorage.getItem('selectedModel');
+          if (savedModel) {
+            modelSelector.value = savedModel;
+          }
+
+          // Add event listener to save selected model to localStorage
+          modelSelector.addEventListener('change', () => {
+            localStorage.setItem('selectedModel', modelSelector.value);
+          });
         });
-
-        // Set the selected model from localStorage if available
-        const savedModel = localStorage.getItem('selectedModel');
-        if (savedModel) {
-          modelSelector.value = savedModel;
-        }
-
-        // Add event listener to save selected model to localStorage
-        modelSelector.addEventListener('change', () => {
-          localStorage.setItem('selectedModel', modelSelector.value);
-        });
-      });
-  }
+    }
     getModelList()
     function appendMessage(role, content) {
       const messageDiv = document.createElement('div');
@@ -251,34 +251,7 @@
       return messageDiv;
     }
 
-    async function sendToOllama(message) {
-      const selectedModel = modelSelector.value;
-
-      const response = await fetch('http://localhost:11434/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: selectedModel,
-          history: [
-            { role: 'user', content: message }
-          ],
-        }),
-      });
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let result = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        result += decoder.decode(value);
-        appendMessage('assistant', result);
-      }
-    }
-  </script>
+</script>
 </body>
 <script>
   // Define the base URL and model
@@ -294,9 +267,9 @@
       if (done) break;
       result = decoder.decode(value, { stream: true });
       // let resultJson=JSON.parse(result)
-      curMessageDiv.textContent+=result+" "
+      curMessageDiv.textContent += result + " "
       // Process the chunk (e.g., parse JSON and handle the response)
-      
+
     }
     chatHistory.push({
       role: "assistant",
@@ -337,7 +310,7 @@
         content: prompt
       })
       appendMessage(role, prompt);
-        chatInput.value = '';
+      chatInput.value = '';
       const response = await fetch(ollamaUrl + "chat", {
         method: "POST",
         headers: {
@@ -362,7 +335,7 @@
   }
 </script>
 <!-- Keeping window size and position persistant -->
- <script>
+<script>
   // Function to save chat window state
   function saveChatWindowState() {
     const state = {
@@ -398,5 +371,6 @@
 
   // Save state on unload
   window.addEventListener('beforeunload', saveChatWindowState);
- </script>
+</script>
+
 </html>
